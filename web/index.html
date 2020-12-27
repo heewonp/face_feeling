@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="style.css" />
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css">
+    </head>
+    <body>
+        <script class="jsbin" src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+		
+		<div class="container" style="background-image: url(./index.png); width: 100%;">
+	
+		</div>
+        <div class="file-upload">
+            <button
+                class="file-upload-btn"
+                type="button"
+                onclick="$('.file-upload-input').trigger( 'click' )">
+                Add Image
+            </button>
+
+            <div class="image-upload-wrap">
+                <input
+                    class="file-upload-input"
+                    type="file"
+                    onchange="readURL(this);"
+                    accept="image/*"/>
+                <div class="drag-text">
+                    <h3>눈 사진을 드래그 드롭하거나 눌러서 업로드 해주세요</h3>
+                </div>
+            </div>
+            <div class="file-upload-content">
+                <img class="file-upload-image" id ="eye_img" src="#" alt="your image" />
+				<div id="loading" class="animated bounce">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="text-center">AI가 당신의 눈을 분석중입니다.</p>
+            	</div>
+				<p class="result-message"></p>
+				<div id="label-container">
+				<canvas id="myChart"></canvas>
+				</div>
+                <div class="image-title-wrap">
+					 <button type="button" class="btn btn-dark" onclick="gaReload();">
+                    <span class="try-again-text">다른 사진으로 재시도</span>
+                	</button>
+                </div>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+        <script type="text/javascript">
+        // More API functions here:
+// https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
+
+// the link to your model provided by Teachable Machine export panel
+const URL = 'https://teachablemachine.withgoogle.com/models/7kGcj9X7f/';
+
+let model, webcam, labelContainer, maxPredictions;
+
+// Load the image model and setup the webcam
+async function init() {
+    const modelURL = URL + 'model.json';
+    const metadataURL = URL + 'metadata.json';
+
+    model = await tmImage.load(modelURL, metadataURL);
+    maxPredictions = model.getTotalClasses();
+
+    labelContainer = document.getElementById('label-container');
+    for (let i = 0; i < maxPredictions; i++) {
+        // and class labels
+        labelContainer.appendChild(document.createElement('div'));
+    }
+}
+
+
+// run the webcam image through the image model
+async function predict() {
+    // predict can take in an image, video or canvas html element
+	var image = document.getElementById('eye_img')
+    const prediction = await model.predict(image,false);
+	prediction.sort((a, b) => parseFloat(b.probability) - parseFloat(a.probability));
+	console.log(prediction);
+	var resultMessage;
+	switch(prediction[0].className){
+			case"봉황":
+			resultMessage ="길상중에 최고의 눈을 가진 당신!\n전혀 불가능할 것 같은 일도 해내는 사람인데요, 세종대왕님이 봉황눈 관상을 가졌다고 합니다~!\n그는 후에 만원자리 지폐에 들어가게 되는데요, 마찬가지로 천원짜리에 계시는 이황님도 봉황눈이라고 합니다.\n봉황눈을 가진 당신도 훗날 지폐에 들어갈지도..."
+			
+			break;
+			case"용":
+			resultMessage ="일국의 제왕이나 황후가 될 가능성이 높은 당신!\n봉황눈 보단 한단계 낮지만 제왕과 황후니 그것도 나쁘지 않는데요,\n의지가 강하고, 행동력이 뛰어나다고 합니다. \n우리나라의 김연아님이 대표적인 용눈인데요,\n용눈을 가진 당신후에 현대인 지금은 조직의 리더, 대중의 지도자가 되겠군요!"
+			break;
+			case"호랑이":
+			resultMessage ="강직한 성격과 정의감을 가진 당신!\n일찍 출세를 한다고 하는데요, 강동원이 바로 이눈을 가지고 있습니다.\n하지만 말년에 자식으로 고생할 수 있으니 주의 하시길..."
+			break;
+			case"소":
+			resultMessage ="실수가 적고 부지런하며 인내심이 강하고 인자하기까지한 당신!\n인생에서 무엇을 하던 성공할 수 있는! 전형적인 외유내강의 성품을 지니고 있는데요.\n 하지만 너무 부지런한 탓에 고혈압 등 질병에 노출되기 쉬우니 주의하시길..."
+			break;
+			case"공작":
+			resultMessage ="평소 무슨 일이 일어나던 현명하고 사리분별력이 뛰어난 당신!\n큰 눈에 속할 뿐만 아니라 화려한 아름다움까지 가지고 있는데요.\n감수성이 풍부하고 표현력이 뛰어나 예술 계통에서 두드러진 활약을 보입니다.\n다만 마음이 약하기때문에 주변 사람을 조심해서 사귀시길..."
+			break;
+			case"도화":
+			resultMessage ="여러사람과 인연을 맺을 수 있고 사랑받는 운명을 타고난 당신!\n기본적으로 도화살(桃花煞)을 가지고 있어 눈이 항상 촉촉하고 젖어있고,\n몽환적인 느낌을 주어 이성에게 항상 인기가 많은 눈입니다.\n그래서 도화눈을 가진 유명한 연예인이 많은데요. \n도화눈을 가진 당신도 연예인에 도전해보는 건 어떨까요?"
+			break;
+			case"학":
+			resultMessage ="높은 이상과 청렴결백한 당신\n적당한 크기의 눈동자에 흑백이 분명하면서도 청초한것이 특징인데요,\n동양인들에게서 많이 찾아볼 수 있습니다.\n재물운이 좋은탓에 후에 만수르가 되어있을지도..."
+			break;
+	}
+	$('.result-message').html(resultMessage);
+		// for (let i = 0; i < maxPredictions; i++) {
+		// // const classPrediction =
+		// //     prediction[i].className + ': ' + prediction[i].probability.toFixed(2);
+		// // labelContainer.childNodes[i].innerHTML = classPrediction;
+		// var ctx = document.getElementById('myChart');
+		// labelContainer.childNodes[i].innerHTML = ctx
+		
+		
+		// }
+	var ctx = document.getElementById('myChart');
+	labelContainer.childNodes[0].innerHTML = ctx
+	var myChart = new Chart(ctx, {
+		type: 'horizontalBar',
+		data: {
+			labels:[prediction[0].className,prediction[1].className,prediction[2].className
+					,prediction[3].className,prediction[4].className,prediction[5].className],
+			datasets: [
+				{
+					label: '# 나는 무슨눈?',
+					data: [Math.round(prediction[0].probability.toFixed(2)*100),Math.round(prediction[1].probability.toFixed(2)*100),
+						  Math.round(prediction[2].probability.toFixed(2)*100),Math.round(prediction[3].probability.toFixed(2)*100),
+						  Math.round(prediction[4].probability.toFixed(2)*100),Math.round(prediction[5].probability.toFixed(2)*100)],
+					backgroundColor: [
+						'rgba(255, 99, 132, 0.2)',
+						'rgba(54, 162, 235, 0.2)',
+						'rgba(255, 206, 86, 0.2)',
+						'rgba(75, 192, 192, 0.2)',
+						'rgba(153, 102, 255, 0.2)',
+						'rgba(255, 159, 64, 0.2)',
+						'rgba(228, 255, 0, 0.2)'
+					],
+					borderColor: [
+						'rgba(255, 99, 132, 1)',
+						'rgba(54, 162, 235, 1)',
+						'rgba(255, 206, 86, 1)',
+						'rgba(75, 192, 192, 1)',
+						'rgba(153, 102, 255, 1)',
+						'rgba(255, 159, 64, 1)',
+						'rgba(228, 255, 0, 1)'
+					],
+					borderWidth: 1,
+				},
+			],
+		},
+	});
+	
+}
+
+function readURL(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+            $('.image-upload-wrap').hide();
+			$('#loading').show();
+            $('.file-upload-image').attr('src', e.target.result);
+            $('.file-upload-content').show();
+            $('.image-title').html(input.files[0].name);
+        };
+
+        reader.readAsDataURL(input.files[0]);
+		init().then(()=>{
+			console.log("hello");
+			predict();
+			$('#loading').hide();
+		});
+		
+    } else {
+        removeUpload();
+    }
+}
+
+function removeUpload() {
+    $('.file-upload-input').replaceWith($('.file-upload-input').clone());
+    $('.file-upload-content').hide();
+    $('.image-upload-wrap').show();
+}
+$('.image-upload-wrap').bind('dragover', function () {
+    $('.image-upload-wrap').addClass('image-dropping');
+});
+$('.image-upload-wrap').bind('dragleave', function () {
+    $('.image-upload-wrap').removeClass('image-dropping');
+});
+			
+function gaReload() {
+             window.location.reload();
+        }
+
+        </script>
+    </body>
+    <!-- Copyright (c) 2020 by Aaron Vanston (https://codepen.io/aaronvanston/pen/yNYOXR)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ -->
+</html>
